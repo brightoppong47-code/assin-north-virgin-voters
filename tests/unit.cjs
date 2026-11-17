@@ -14,6 +14,11 @@ vm.createContext(ctx);vm.runInContext(fs.readFileSync(ROOT+'/js/outbox.js','utf8
 authCallback(user);listeners.shift()();while(listeners.length)listeners.shift()();
 vm.runInContext("areas=[{id:'area-1',name:'Endwa'}];stations=[{id:'s1',name:'Station One',areaId:'area-1'}];",ctx);
 const form={data:{name:'Offline Test',contact:'0241234567',location:'Endwa',type:'registration',stationId:'s1',consent:'on'},reset(){this.wasReset=true},querySelector:()=>({})};el('record-form').onsubmit({preventDefault(){},target:form});await new Promise(r=>setTimeout(r,30));assert.equal(storage.length,1);assert.equal(form.wasReset,true);assert.equal(writes,0);assert.match(el('sync-status').textContent,/1 record/);
+// Transfer requests require an ID and preserve leading zeroes in the offline queue.
+const transfer={...form,data:{...form.data,type:'transfer',name:'Transfer Test',currentStation:'Old station',voterIdNumber:'   '},wasReset:false};
+el('record-form').onsubmit({preventDefault(){},target:transfer});await new Promise(r=>setTimeout(r,30));assert.equal(storage.length,1);assert.equal(transfer.wasReset,false);
+transfer.data.voterIdNumber=' 0012345678 ';el('record-form').onsubmit({preventDefault(){},target:transfer});await new Promise(r=>setTimeout(r,30));assert.equal(storage.length,2);const savedTransfer=new ctx.Outbox(storage).list('tester').find(r=>r.data.type==='transfer');assert.equal(savedTransfer.data.voterIdNumber,'0012345678');new ctx.Outbox(storage).remove('tester',savedTransfer.id);
+el('record-type').value='transfer';el('record-type').onchange();assert.equal(el('voter-id-label').hidden,false);el('record-type').value='registration';el('record-type').onchange();assert.equal(el('voter-id-label').hidden,true);
 // Recreate storage reader to simulate a restart; another user cannot see this queue.
 assert.equal(new ctx.Outbox(storage).list('tester').length,1);assert.equal(new ctx.Outbox(storage).list('other').length,0);
 ctx.navigator.onLine=true;denied=true;await vm.runInContext('syncPending()',ctx);assert.equal(storage.length,1);assert.match(new ctx.Outbox(storage).list('tester')[0].error,/Access denied/);

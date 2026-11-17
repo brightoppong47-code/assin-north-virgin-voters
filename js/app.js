@@ -94,6 +94,7 @@ async function syncPending(){
   if(!navigator.onLine||auth.currentUser?.uid!==uid||!profile)break;
   try{
    await runTransaction(db,async tx=>{
+    if(auth.currentUser?.uid!==uid)throw Error('Account changed. Sign in with the account that collected this record.');
     const account=await tx.get(doc(db,'users',uid)),p=account.data();
     if(!p?.active||!['admin','agent'].includes(p.role))throw Error('Account access changed. Contact admin.');
     if(p.role==='agent'&&p.areaId!==row.data.areaId)throw Error('Your assigned area changed. Contact admin about this pending record.');
@@ -105,6 +106,7 @@ async function syncPending(){
      if(!Object.keys(row.data).filter(key=>key!=='createdByName').every(key=>data[key]===row.data[key]))throw Error('A different record with these matching details already exists. Contact admin.');
      return;
     }
+    if(auth.currentUser?.uid!==uid)throw Error('Account changed. Record kept for the original account.');
     tx.set(ref,{...row.data,createdByName:p.name,createdAt:serverTimestamp()});
    });
    outbox.remove(uid,row.id);
@@ -127,10 +129,10 @@ for(const id of ['seed','logo-default'])$(id).addEventListener('click',e=>{if(!n
 $('agent-list').addEventListener('click',e=>{if(!navigator.onLine){e.stopImmediatePropagation();message('Reconnect to manage accounts.',true);}},true);
 $('agent-list').addEventListener('change',e=>{if(!navigator.onLine){e.stopImmediatePropagation();message('Reconnect to manage accounts.',true);}},true);
 $('record-table').addEventListener('click',e=>{if(!navigator.onLine&&e.target.closest('[data-delete]')){e.stopImmediatePropagation();message('Reconnect to delete a server record.',true);}},true);
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js').then(async registration=>{
+if('serviceWorker' in navigator){navigator.serviceWorker.controller?.postMessage({type:'CHECK_OFFLINE'});navigator.serviceWorker.register('./sw.js').then(async registration=>{
  await navigator.serviceWorker.ready;
  const worker=registration.active;
  worker?.postMessage({type:'CHECK_OFFLINE'});
-}).catch(e=>{message('Offline loading could not be installed: '+e.message,true);});}
+}).catch(e=>{if(!navigator.serviceWorker.controller)message('Offline loading could not be installed: '+e.message,true);});}
 navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='OFFLINE_READY')$('offline-ready').textContent='Offline loading ready on this phone. Stay signed in; open the app online once to load your assigned stations. Phone storage contains personal data—use your own secured device.';});
 updateSyncStatus();

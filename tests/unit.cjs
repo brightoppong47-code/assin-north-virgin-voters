@@ -1,3 +1,4 @@
+const ROOT=require('node:path').resolve(__dirname,'..');
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),{webcrypto}=require('crypto');
 const values=new Map();const storage={get length(){return values.size},key:i=>[...values.keys()][i]??null,getItem:k=>values.get(k)??null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};
 const elements=new Map();function el(id){if(!elements.has(id))elements.set(id,{value:'',hidden:false,disabled:false,checked:false,textContent:'',innerHTML:'',className:'',classList:{contains:()=>false,toggle(){}},addEventListener(){},querySelector:()=>({disabled:false,required:false}),querySelectorAll:()=>[],reset(){},elements:{email:{value:''}}});return elements.get(id)}
@@ -8,7 +9,7 @@ const ctx={firebaseConfig:{projectId:"test"},console,localStorage:storage,crypto
 initializeApp:()=>({}),getAuth:()=>({currentUser:user}),initializeFirestore:()=>({}),persistentLocalCache:()=>({}),persistentMultipleTabManager:()=>({}),onAuthStateChanged:(a,cb)=>authCallback=cb,
 collection:(db,col)=>({col}),doc:(db,col,id)=>({col,id}),query:q=>q,where(){},serverTimestamp:()=>new Timestamp(123),onSnapshot:(ref,cb)=>{listeners.push(()=>cb(ref.id?snapshot(ref):{docs:(ref.col==='stations'?[{id:'s1',data:()=>({name:'Station One',areaId:'area-1'})}]:[])}));return ()=>{}},
 runTransaction:async(db,fn)=>{if(denied)throw Object.assign(Error('denied'),{code:'permission-denied'});const staged=[];const result=await fn({get:async ref=>snapshot(ref),set:(ref,d)=>staged.push([ref,d])});for(const [ref,d]of staged){server.set(ref.id,d);writes++}return result},filterReport:r=>r};
-vm.createContext(ctx);vm.runInContext(fs.readFileSync('offline-update/js/outbox.js','utf8').replace('export class','class')+'\nglobalThis.Outbox=Outbox;',ctx);vm.runInContext(fs.readFileSync('offline-update/js/app.js','utf8').replace(/^import .*;\n/gm,''),ctx);
+vm.createContext(ctx);vm.runInContext(fs.readFileSync(ROOT+'/js/outbox.js','utf8').replace('export class','class')+'\nglobalThis.Outbox=Outbox;',ctx);vm.runInContext(fs.readFileSync(ROOT+'/js/app.js','utf8').replace(/^import .*;\n/gm,''),ctx);
 (async()=>{
 authCallback(user);listeners.shift()();while(listeners.length)listeners.shift()();
 vm.runInContext("areas=[{id:'area-1',name:'Endwa'}];stations=[{id:'s1',name:'Station One',areaId:'area-1'}];",ctx);

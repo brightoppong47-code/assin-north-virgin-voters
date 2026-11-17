@@ -1,7 +1,7 @@
-const CACHE='assin-north-offline-20261117-1';
+const CACHE='assin-north-offline-20261117-2';
 const ROOT=new URL('./',self.location.href);
 const SDK='https://www.gstatic.com/firebasejs/12.2.1/';
-const FILES=['./','index.html','style.css','js/app.js','js/outbox.js','js/data-tools.js','js/firebase-config.js','vendor/jspdf.umd.min.js','vendor/jspdf.plugin.autotable.min.js','assets/logo.svg'];
+const FILES=['./','index.html','style.css','js/app.js','js/outbox.js','js/data-tools.js','js/firebase-config.js','vendor/jspdf.umd.min.js','vendor/jspdf.plugin.autotable.min.js','assets/logo.svg','manifest.webmanifest','assets/icon-192.png','assets/icon-512.png','assets/icon-maskable-512.png'];
 const SDKS=['firebase-app.js','firebase-auth.js','firebase-firestore.js'].map(p=>SDK+p);
 self.addEventListener('install',event=>event.waitUntil((async()=>{
  const cache=await caches.open(CACHE);
